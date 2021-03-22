@@ -1,0 +1,57 @@
+- name: "Configuration of Datanode"
+  hosts: DN
+  vars_prompt:
+  - name: DN_DIR
+    prompt: "Enter DN Directory:"
+    private: no
+
+  - name: port_no
+    prompt: "Enter port no:"
+    private: no
+
+  - name: NN_IP
+    prompt: "Enter Your IP Address"
+    private: no
+  tasks:
+  - name: "Copying JDK Software"
+    copy:
+      src: "/root/jdk-8u171-linux-x64.rpm"
+      dest: "/root"
+
+  - name: "Copying Hadoop in the hosts"
+    copy:
+      src: "/root/hadoop-1.2.1-1.x86_64.rpm"
+      dest: "/root"
+
+  - name: "Installing jdk...."
+    command: "rpm -ivh jdk-8u171-linux-x64.rpm"
+
+  - name: "Installing Hadoop..."
+    command: "rpm -ivh hadoop-1.2.1-1.x86_64.rpm --force"
+  - name: "TO create Namenode Directory"
+    file:
+      path: "{{ DN_DIR }}"
+      state: directory
+  - name: "To configure hdfs-site.xml"
+    blockinfile:
+      path: /etc/hadoop/hdfs-site.xml
+      insertafter: "<configuration>"
+      block:
+        <property>
+        <name>dfs.data.dir</name>
+        <value>{{ DN_DIR }}</value>
+        </property>
+  - name: "To configure core-site.xml"
+    blockinfile:
+      path: "/etc/hadoop/core-site.xml"
+      insertafter: "<configuration>"
+      block:
+        <property>
+        <name>fs.default.name</name>
+        <value>hdfs://{{ NN_IP }}:{{ port_no }}</value>
+        </property>
+
+  - name: Start Hadoop NameNode Service
+    command: "hadoop-daemon.sh start datanode"
+
+

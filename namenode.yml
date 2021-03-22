@@ -1,0 +1,58 @@
+- name: "Configuration of Namenode"
+  hosts: NN
+  vars_prompt:
+  - name: NN_DIR
+    prompt: "Enter NN Directory:"
+    private: no
+  
+  - name: port_no
+    prompt: "Enter port no:"
+    private: no
+  tasks:
+  - name: "Copying JDK Software"
+    copy:
+      src: "/root/jdk-8u171-linux-x64.rpm"
+      dest: "/root"
+ 
+  - name: "Copying Hadoop in the hosts"
+    copy:
+      src: "/root/hadoop-1.2.1-1.x86_64.rpm"  
+      dest: "/root" 
+   
+  - name: "Installing jdk...."
+    command: "rpm -ivh jdk-8u171-linux-x64.rpm"
+      
+  - name: "Installing Hadoop..."
+    command: "rpm -ivh hadoop-1.2.1-1.x86_64.rpm --force"
+
+  - name: "TO create Namenode Directory"
+    file:
+      path: "{{ NN_DIR }}"
+      state: directory
+  - name: "To configure hdfs-site.xml"
+    blockinfile:
+      path: /etc/hadoop/hdfs-site.xml
+      insertafter: "<configuration>"
+      block:
+        <property>
+        <name>dfs.name.dir</name>
+        <value>{{ NN_DIR }}</value>
+        </property>
+  - name: "To configure core-site.xml"
+    blockinfile:
+      path: "/etc/hadoop/core-site.xml"
+      insertafter: "<configuration>"
+      block:
+        <property>
+        <name>fs.default.name</name>
+        <value>hdfs://0.0.0.0:{{ port_no }}</value>
+        </property>
+
+  - name: Format NameNode Directory
+    shell: "echo Y | hadoop namenode -format"
+
+  - name: Start Hadoop NameNode Service
+    command: "hadoop-daemon.sh start namenode"
+
+
+   
